@@ -1,0 +1,26 @@
+# Custom Language File for Launcher Customizer
+
+[ejs.app]
+title = "Oreon Launcher"
+
+[ejs.landing]
+mediaGitHubURL = "https://github.com/60zz/OreonLauncher"
+mediaTwitterURL = "https://x.com/Oreon_ABYSS/"
+mediaInstagramURL = "https://www.tiktok.com/@oreon.abyss"
+mediaYouTubeURL = "https://www.youtube.com/channel/UC6ACK0XVNBqBovHI7394zqg"
+mediaDiscordURL = "https://discord.gg/oreon"
+mediaWebsiteURL = "https://oreon.minecart.com.br"
+
+[ejs.settings]
+sourceGithubLink = "https://github.com/60zz/OreonLauncher"
+supportLink = "https://github.com/60zz/SSMPLauncher/issues"
+selectLanguage = "Select a Language"
+changeLanguageTitle = "Change the launcher language"
+changeLanguageDesc = "You can change the language in the list below. This text will not change if you change the language so you can find your wayback here to change it back"
+
+[ejs.welcome]
+welcomeHeader = "BEM VINDO A OREON"
+welcomeDescription = "Seja muito bem vindo(a), meu caro Aventureiro... Você não precisa saber quem eu sou, mas precisa saber que eu estou te observando a todo instante... Eu não vou te causar mal algum, a não ser que seja necessário, e eu julgo que não será. Espero que aproveite sua vinda à Abyss! Será muito divertido..."
+
+[ejs.overlay]
+changedLanguageHeader = "You changed the previous language"
