@@ -1,0 +1,111 @@
+{
+    "version": "1.0.0",
+    "discord": {
+        "clientId": "",
+        "smallImageText": "Oreon",
+        "smallImageKey": "oreon"
+    },
+    "rss": "",
+    "servers": [
+        {
+            "id": "Oreon-1.21.5-Fabric",
+            "name": "Oreon Roleplay RPG Medieval",
+            "description": "Servidor Oreon de Minecraft Roleplay RPG medieval.",
+            "icon": "http://151.242.227.173/launcher/server-icon.png",
+            "version": "1.0.0",
+            "address": "151.242.227.173",
+            "minecraftVersion": "1.21.5",
+            "javaOptions": {
+                "supported": ">=21",
+                "suggestedMajor": 21,
+                "ram": {
+                    "recommended": 4096,
+                    "minimum": 2048
+                }
+            },
+            "discord": {
+                "shortId": "Oreon",
+                "largeImageText": "Oreon Roleplay RPG Medieval",
+                "largeImageKey": "oreon"
+            },
+            "mainServer": true,
+            "autoconnect": true,
+            "modules": [
+                {
+                    "id": "net.fabricmc:fabric-loader:0.16.14",
+                    "name": "Fabric Loader 0.16.14",
+                    "type": "Fabric",
+                    "artifact": {
+                        "size": 1416842,
+                        "url": "https://maven.fabricmc.net/net/fabricmc/fabric-loader/0.16.14/fabric-loader-0.16.14.jar"
+                    },
+                    "subModules": [
+                        {
+                            "id": "fabric-loader-0.16.14-1.21.5",
+                            "name": "Fabric Loader 1.21.5 Version Manifest",
+                            "type": "VersionManifest",
+                            "artifact": {
+                                "size": 2849,
+                                "url": "https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.14/profile/json"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "net.fabricmc.fabric-api:fabric-api:0.128.2+1.21.5",
+                    "name": "Fabric API",
+                    "type": "FabricMod",
+                    "artifact": {
+                        "size": 2248994,
+                        "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/kKEGlsne/fabric-api-0.128.2%2B1.21.5.jar"
+                    }
+                },
+                {
+                    "id": "com.tom.cpm:custom-player-models:1.21.5-0.6.24a-fabric",
+                    "name": "Custom Player Models",
+                    "type": "FabricMod",
+                    "artifact": {
+                        "size": 2830290,
+                        "url": "https://cdn.modrinth.com/data/h1E7sQNL/versions/4lpVIOWw/CustomPlayerModels-Fabric-1.21.5-0.6.24a.jar"
+                    }
+                },
+                {
+                    "id": "io.github.kosmx.emotes:emotecraft:2.6.2+1.21.5-fabric",
+                    "name": "Emotecraft",
+                    "type": "FabricMod",
+                    "artifact": {
+                        "size": 1355985,
+                        "url": "https://cdn.modrinth.com/data/pZ2wrerK/versions/JegUMwLH/emotecraft-fabric-for-MC1.21.5-2.6.2.jar"
+                    }
+                },
+                {
+                    "id": "de.maxhenkel.voicechat:voicechat:1.21.5-2.6.14-fabric",
+                    "name": "Simple Voice Chat",
+                    "type": "FabricMod",
+                    "artifact": {
+                        "size": 5441934,
+                        "url": "https://cdn.modrinth.com/data/9eGKb6K1/versions/tHiaTbgM/voicechat-fabric-1.21.5-2.6.14.jar"
+                    }
+                },
+                {
+                    "id": "net.caffeinemc:sodium:mc1.21.5-0.6.12-fabric",
+                    "name": "Sodium",
+                    "type": "FabricMod",
+                    "artifact": {
+                        "size": 1333648,
+                        "url": "https://cdn.modrinth.com/data/AANobbMI/versions/fVbw1C7i/sodium-fabric-0.6.12%2Bmc1.21.5.jar"
+                    }
+                },
+                {
+                    "id": "net.irisshaders:iris:1.8.11+1.21.5-fabric",
+                    "name": "Iris Shaders",
+                    "type": "FabricMod",
+                    "artifact": {
+                        "size": 2714605,
+                        "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/U6evbjd0/iris-fabric-1.8.11%2Bmc1.21.5.jar"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,30 @@
+# Custom Language File for Launcher Customizer
+
+[ejs.app]
+title = "Oreon Launcher"
+
+[ejs.landing]
+mediaGitHubURL = "#"
+mediaTwitterURL = "#"
+mediaInstagramURL = "#"
+mediaYouTubeURL = "#"
+mediaDiscordURL = "#"
+
+[ejs.settings]
+sourceGithubLink = "#"
+supportLink = "#"
+
+[ejs.welcome]
+welcomeHeader = "BEM-VINDO AO OREON"
+welcomeDescription = "Entre em um mundo medieval de roleplay e RPG, preparado para que os jogadores acessem o servidor com os mods certos, Java compativel e configuracoes prontas."
+welcomeDescCTA = "Voce esta a poucos cliques de entrar em Oreon."
+
+[js.landing.discord]
+joining = "Entrando em Oreon!"
+joined = "Explorando Oreon!"
+
+[js.landing.systemScan]
+javaRequiredMessage = "Uma instalacao x64 valida do Java {major} e necessaria para iniciar o Oreon."
+
+[js.landing.dlAsync]
+launchWrapperNotDownloaded = "Um arquivo essencial do carregador de mods nao foi baixado corretamente. Verifique sua conexao, antivirus e tente iniciar novamente."
