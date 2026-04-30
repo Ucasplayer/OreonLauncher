@@ -11,22 +11,22 @@ mediaYouTubeURL = "https://www.youtube.com/@oreonSMP"
 mediaDiscordURL = "https://discord.gg/oreon"
 
 [ejs.login]
-loginSubheader = "MINECRAFT LOGIN"
-loginEmailPlaceholder = "EMAIL OR USERNAME"
+loginSubheader = "LOGIN DO MINECRAFT"
+loginEmailPlaceholder = "E-MAIL OU USUARIO"
 
 [ejs.loginOptions]
-loginWithOffline = "Login Offline"
+loginWithOffline = "Entrar Offline"
 
 [ejs.settings]
 mojangAccount = "Offline"
-addMojangAccount = "+ Add Offline Account"
+addMojangAccount = "+ Adicionar Conta Offline"
 sourceGithubLink = "#"
 supportLink = "#"
 
 [ejs.welcome]
 welcomeHeader = "BEM-VINDO AO OREON"
 welcomeDescription = "Entre em um mundo medieval de roleplay e RPG, preparado para que os jogadores acessem o servidor com os mods certos, Java compativel e configuracoes prontas."
-welcomeDescCTA = "Voce esta a poucos cliques de entrar em Oreon."
+welcomeDescCTA = "Voce esta a poucos cliques de entrar no Oreon."
 
 [js.landing.discord]
 joining = "Entrando em Oreon!"
@@ -40,11 +40,11 @@ launchWrapperNotDownloaded = "Um arquivo essencial do carregador de mods nao foi
 
 [js.login.offline]
 subheader = "LOGIN OFFLINE"
-usernamePlaceholder = "USERNAME"
+usernamePlaceholder = "USUARIO"
 
 [js.login.error]
 invalidUsername = "* Use 1-16 letras, numeros ou _"
 
 [js.auth.offline.error]
-invalidUsernameTitle = "Invalid Offline Username"
-invalidUsernameDesc = "Use only letters, numbers, or underscore. The username must be 1 to 16 characters long."
+invalidUsernameTitle = "Usuario offline invalido"
+invalidUsernameDesc = "Use apenas letras, numeros ou underline. O usuario deve ter de 1 a 16 caracteres."
