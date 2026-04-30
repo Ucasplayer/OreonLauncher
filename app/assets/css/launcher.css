@@ -3145,14 +3145,13 @@ input:checked + .toggleSwitchSlider:before {
     fill: #1b8dd4;
 }
 
-/* Instagram icon colors. */
-#instagramSVG:hover,
-#instagramURL:focus #instagramSVG {
-    fill: url('#instaFill')
-    /*fill: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); */
+/* TikTok icon colors. */
+#tiktokSVG:hover,
+#tiktokURL:focus #tiktokSVG {
+    fill: #00f2ea;
 }
-#instagramSVG:active {
-    fill: url('#instaFill')
+#tiktokSVG:active {
+    fill: #ff0050;
 }
 
 /* Youtube icon colors. */

@@ -5,10 +5,10 @@ title = "Oreon Launcher"
 
 [ejs.landing]
 mediaGitHubURL = "#"
-mediaTwitterURL = "#"
-mediaInstagramURL = "#"
-mediaYouTubeURL = "#"
-mediaDiscordURL = "#"
+mediaTwitterURL = "https://x.com/JogarOreon"
+mediaTikTokURL = "https://www.tiktok.com/@jogaroreon"
+mediaYouTubeURL = "https://www.youtube.com/@oreonSMP"
+mediaDiscordURL = "https://discord.gg/oreon"
 
 [ejs.login]
 loginSubheader = "MINECRAFT LOGIN"
