@@ -48,6 +48,69 @@
                                 "size": 2849,
                                 "url": "https://meta.fabricmc.net/v2/versions/loader/1.21.5/0.16.14/profile/json"
                             }
+                        },
+                        {
+                            "id": "org.ow2.asm:asm:9.8",
+                            "name": "ASM",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 126113,
+                                "url": "https://maven.fabricmc.net/org/ow2/asm/asm/9.8/asm-9.8.jar"
+                            }
+                        },
+                        {
+                            "id": "org.ow2.asm:asm-analysis:9.8",
+                            "name": "ASM Analysis",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 35151,
+                                "url": "https://maven.fabricmc.net/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar"
+                            }
+                        },
+                        {
+                            "id": "org.ow2.asm:asm-commons:9.8",
+                            "name": "ASM Commons",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 73498,
+                                "url": "https://maven.fabricmc.net/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar"
+                            }
+                        },
+                        {
+                            "id": "org.ow2.asm:asm-tree:9.8",
+                            "name": "ASM Tree",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 51934,
+                                "url": "https://maven.fabricmc.net/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar"
+                            }
+                        },
+                        {
+                            "id": "org.ow2.asm:asm-util:9.8",
+                            "name": "ASM Util",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 94559,
+                                "url": "https://maven.fabricmc.net/org/ow2/asm/asm-util/9.8/asm-util-9.8.jar"
+                            }
+                        },
+                        {
+                            "id": "net.fabricmc:sponge-mixin:0.15.5+mixin.0.8.7",
+                            "name": "Fabric Sponge Mixin",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 1499194,
+                                "url": "https://maven.fabricmc.net/net/fabricmc/sponge-mixin/0.15.5+mixin.0.8.7/sponge-mixin-0.15.5+mixin.0.8.7.jar"
+                            }
+                        },
+                        {
+                            "id": "net.fabricmc:intermediary:1.21.5",
+                            "name": "Fabric Intermediary",
+                            "type": "Library",
+                            "artifact": {
+                                "size": 724686,
+                                "url": "https://maven.fabricmc.net/net/fabricmc/intermediary/1.21.5/intermediary-1.21.5.jar"
+                            }
                         }
                     ]
                 },

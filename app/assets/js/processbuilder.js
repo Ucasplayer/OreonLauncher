@@ -839,7 +839,7 @@ class ProcessBuilder {
                 libs[mdl.getVersionlessMavenIdentifier()] = mdl.getPath()
                 if(mdl.subModules.length > 0){
                     const res = this._resolveModuleLibraries(mdl)
-                    if(res.length > 0){
+                    if(Object.keys(res).length > 0){
                         libs = {...libs, ...res}
                     }
                 }
@@ -848,9 +848,9 @@ class ProcessBuilder {
 
         //Check for any libraries in our mod list.
         for(let i=0; i<mods.length; i++){
-            if(mods.sub_modules != null){
+            if(mods[i].subModules != null){
                 const res = this._resolveModuleLibraries(mods[i])
-                if(res.length > 0){
+                if(Object.keys(res).length > 0){
                     libs = {...libs, ...res}
                 }
             }
@@ -863,26 +863,26 @@ class ProcessBuilder {
      * Recursively resolve the path of each library required by this module.
      * 
      * @param {Object} mdl A module object from the server distro index.
-     * @returns {Array.<string>} An array containing the paths of each library this module requires.
+     * @returns {{[id: string]: string}} A map of library identifiers to paths.
      */
     _resolveModuleLibraries(mdl){
         if(!mdl.subModules.length > 0){
-            return []
+            return {}
         }
-        let libs = []
+        let libs = {}
         for(let sm of mdl.subModules){
             if(sm.rawModule.type === Type.Library){
 
                 if(sm.rawModule.classpath ?? true) {
-                    libs.push(sm.getPath())
+                    libs[sm.getVersionlessMavenIdentifier()] = sm.getPath()
                 }
             }
             // If this module has submodules, we need to resolve the libraries for those.
             // To avoid unnecessary recursive calls, base case is checked here.
             if(mdl.subModules.length > 0){
                 const res = this._resolveModuleLibraries(sm)
-                if(res.length > 0){
-                    libs = libs.concat(res)
+                if(Object.keys(res).length > 0){
+                    libs = {...libs, ...res}
                 }
             }
         }

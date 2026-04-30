@@ -2,8 +2,7 @@ const { DistributionAPI } = require('helios-core/common')
 
 const ConfigManager = require('./configmanager')
 
-// Host docs/oreon_distribution.json at this URL before distributing the launcher.
-exports.REMOTE_DISTRO_URL = 'http://151.242.227.173/launcher/distribution.json'
+exports.REMOTE_DISTRO_URL = 'https://raw.githubusercontent.com/Ucasplayer/OreonLauncherFiles/main/launcher/distribution.json'
 
 const api = new DistributionAPI(
     ConfigManager.getLauncherDirectory(),

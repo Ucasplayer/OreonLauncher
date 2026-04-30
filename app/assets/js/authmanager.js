@@ -10,6 +10,7 @@
  */
 // Requirements
 const ConfigManager          = require('./configmanager')
+const crypto                 = require('crypto')
 const { LoggerUtil }         = require('helios-core')
 const { RestResponseStatus } = require('helios-core/common')
 const { MojangRestAPI, MojangErrorCode } = require('helios-core/mojang')
@@ -18,6 +19,7 @@ const { AZURE_CLIENT_ID }    = require('./ipcconstants')
 const Lang = require('./langloader')
 
 const log = LoggerUtil.getLogger('AuthManager')
+const validOfflineUsername = /^[a-zA-Z0-9_]{1,16}$/
 
 // Error messages
 
@@ -48,7 +50,18 @@ function microsoftErrorDisplayable(errorCode) {
                 title: Lang.queryJS('auth.microsoft.error.unknownTitle'),
                 desc: Lang.queryJS('auth.microsoft.error.unknownDesc')
             }
+        default:
+            log.error('Unknown Microsoft auth error code:', errorCode)
+            return {
+                title: Lang.queryJS('auth.microsoft.error.unknownTitle'),
+                desc: Lang.queryJS('auth.microsoft.error.unknownDesc')
+            }
     }
+}
+
+function microsoftInvalidAppRegistration(response) {
+    const body = response?.error?.response?.body
+    return body?.errorMessage != null && body.errorMessage.includes('Invalid app registration')
 }
 
 function mojangErrorDisplayable(errorCode) {
@@ -167,6 +180,34 @@ exports.addMojangAccount = async function(username, password) {
     }
 }
 
+function offlineUUID(username) {
+    const hash = crypto.createHash('md5').update(`OfflinePlayer:${username}`).digest()
+    hash[6] = (hash[6] & 0x0f) | 0x30
+    hash[8] = (hash[8] & 0x3f) | 0x80
+    const hex = hash.toString('hex')
+    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`
+}
+
+/**
+ * Add an offline account. This does not contact Mojang or Microsoft.
+ *
+ * @param {string} username The username to use in-game.
+ * @returns {Object} The created offline account.
+ */
+exports.addOfflineAccount = async function(username) {
+    const cleanUsername = username.trim()
+    if(!validOfflineUsername.test(cleanUsername)) {
+        return Promise.reject({
+            title: Lang.queryJS('auth.offline.error.invalidUsernameTitle'),
+            desc: Lang.queryJS('auth.offline.error.invalidUsernameDesc')
+        })
+    }
+
+    const ret = ConfigManager.addOfflineAuthAccount(offlineUUID(cleanUsername), cleanUsername)
+    ConfigManager.save()
+    return ret
+}
+
 const AUTH_MODE = { FULL: 0, MS_REFRESH: 1, MC_REFRESH: 2 }
 
 /**
@@ -188,6 +229,7 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         if(authMode !== AUTH_MODE.MC_REFRESH) {
             const accessTokenResponse = await MicrosoftAuth.getAccessToken(entryCode, authMode === AUTH_MODE.MS_REFRESH, AZURE_CLIENT_ID)
             if(accessTokenResponse.responseStatus === RestResponseStatus.ERROR) {
+                log.error('Microsoft auth failed while getting OAuth access token.', accessTokenResponse)
                 return Promise.reject(microsoftErrorDisplayable(accessTokenResponse.microsoftErrorCode))
             }
             accessToken = accessTokenResponse.data
@@ -198,18 +240,28 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         
         const xblResponse = await MicrosoftAuth.getXBLToken(accessTokenRaw)
         if(xblResponse.responseStatus === RestResponseStatus.ERROR) {
+            log.error('Microsoft auth failed while getting Xbox Live token.', xblResponse)
             return Promise.reject(microsoftErrorDisplayable(xblResponse.microsoftErrorCode))
         }
         const xstsResonse = await MicrosoftAuth.getXSTSToken(xblResponse.data)
         if(xstsResonse.responseStatus === RestResponseStatus.ERROR) {
+            log.error('Microsoft auth failed while getting XSTS token.', xstsResonse)
             return Promise.reject(microsoftErrorDisplayable(xstsResonse.microsoftErrorCode))
         }
         const mcTokenResponse = await MicrosoftAuth.getMCAccessToken(xstsResonse.data)
         if(mcTokenResponse.responseStatus === RestResponseStatus.ERROR) {
+            log.error('Microsoft auth failed while getting Minecraft access token.', mcTokenResponse)
+            if(microsoftInvalidAppRegistration(mcTokenResponse)) {
+                return Promise.reject({
+                    title: 'Microsoft App Registration Not Approved',
+                    desc: 'A Microsoft account was validated, but Minecraft Services rejected this launcher app registration. Submit the Azure Application Client ID for Minecraft review at https://aka.ms/mce-reviewappid and wait for approval.'
+                })
+            }
             return Promise.reject(microsoftErrorDisplayable(mcTokenResponse.microsoftErrorCode))
         }
         const mcProfileResponse = await MicrosoftAuth.getMCProfile(mcTokenResponse.data.access_token)
         if(mcProfileResponse.responseStatus === RestResponseStatus.ERROR) {
+            log.error('Microsoft auth failed while getting Minecraft profile.', mcProfileResponse)
             return Promise.reject(microsoftErrorDisplayable(mcProfileResponse.microsoftErrorCode))
         }
         return {
@@ -305,6 +357,17 @@ exports.removeMicrosoftAccount = async function(uuid){
         return Promise.resolve()
     } catch (err){
         log.error('Error while removing account', err)
+        return Promise.reject(err)
+    }
+}
+
+exports.removeOfflineAccount = async function(uuid){
+    try {
+        ConfigManager.removeAuthAccount(uuid)
+        ConfigManager.save()
+        return Promise.resolve()
+    } catch (err){
+        log.error('Error while removing offline account', err)
         return Promise.reject(err)
     }
 }
@@ -418,6 +481,8 @@ exports.validateSelected = async function(){
 
     if(current.type === 'microsoft') {
         return await validateSelectedMicrosoftAccount()
+    } else if(current.type === 'offline') {
+        return true
     } else {
         return await validateSelectedMojangAccount()
     }

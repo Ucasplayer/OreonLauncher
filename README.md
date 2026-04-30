@@ -1,211 +1,100 @@
-<p align="center"><img src="./app/assets/images/SealCircle.png" width="150px" height="150px" alt="aventium softworks"></p>
+# Oreon Launcher
 
-<h1 align="center">Helios Launcher</h1>
+Launcher oficial do servidor **Oreon** (Minecraft Roleplay RPG medieval), baseado no Helios Launcher.
 
-<em><h5 align="center">(formerly Electron Launcher)</h5></em>
+## Visao Geral
 
-[<p align="center"><img src="https://img.shields.io/github/actions/workflow/status/dscalzi/HeliosLauncher/build.yml?branch=master&style=for-the-badge" alt="gh actions">](https://github.com/dscalzi/HeliosLauncher/actions) [<img src="https://img.shields.io/github/downloads/dscalzi/HeliosLauncher/total.svg?style=for-the-badge" alt="downloads">](https://github.com/dscalzi/HeliosLauncher/releases) <img src="https://forthebadge.com/images/badges/winter-is-coming.svg"  height="28px" alt="winter-is-coming"></p>
+O Oreon Launcher automatiza o processo para o jogador:
 
-<p align="center">Join modded servers without worrying about installing Java, Forge, or other mods. We'll handle that for you.</p>
+- baixar e validar arquivos do cliente;
+- manter mods e bibliotecas atualizados via `distribution.json`;
+- validar Java e iniciar o jogo com parametros corretos;
+- conectar no servidor Oreon com um clique.
 
-![Screenshot 1](https://i.imgur.com/6o7SmH6.png)
-![Screenshot 2](https://i.imgur.com/x3B34n1.png)
+Stack principal:
 
-## Features
+- Electron
+- EJS + CSS + JS
+- `helios-core`
 
-* 🔒 Full account management.
-  * Add multiple accounts and easily switch between them.
-  * Microsoft (OAuth 2.0) + Mojang (Yggdrasil) authentication fully supported.
-  * Credentials are never stored and transmitted directly to Mojang.
-* 📂 Efficient asset management.
-  * Receive client updates as soon as we release them.
-  * Files are validated before launch. Corrupt or incorrect files will be redownloaded.
-* ☕ **Automatic Java validation.**
-  * If you have an incompatible version of Java installed, we'll install the right one *for you*.
-  * You do not need to have Java installed to run the launcher.
-* 📰 News feed natively built into the launcher.
-* ⚙️ Intuitive settings management, including a Java control panel.
-* Supports all of our servers.
-  * Switch between server configurations with ease.
-  * View the player count of the selected server.
-* Automatic updates. That's right, the launcher updates itself.
-*  View the status of Mojang's services.
+## Funcionalidades Atuais
 
-This is not an exhaustive list. Download and install the launcher to gauge all it can do!
+- Gerenciamento de arquivos por manifesto remoto (`distribution.json`).
+- Suporte a mod loader Fabric.
+- Download e verificacao de integridade de dependencias antes de iniciar.
+- Configuracoes de Java, memoria e diretorio de dados.
+- Login Microsoft (dependente de aprovacao do App Registration).
+- **Login Offline (provisorio)** para desenvolvimento/testes.
 
-#### Need Help? [Check the wiki.][wiki]
+## Login
 
-#### Like the project? Leave a ⭐ star on the repository!
+Atualmente existem dois fluxos:
 
-## Downloads
+1. **Microsoft Login**
+2. **Login Offline**
 
-You can download from [GitHub Releases](https://github.com/dscalzi/HeliosLauncher/releases)
+Observacao importante sobre o modo offline:
 
-#### Latest Release
+- funciona para abrir o cliente e testar;
+- para entrar em servidor com esse modo, o servidor precisa estar compatível com autenticacao offline (ex.: `online-mode=false` no ambiente de teste).
 
-[![](https://img.shields.io/github/release/dscalzi/HeliosLauncher.svg?style=flat-square)](https://github.com/dscalzi/HeliosLauncher/releases/latest)
+## Distribution (Manifesto do Launcher)
 
-#### Latest Pre-Release
-[![](https://img.shields.io/github/release/dscalzi/HeliosLauncher/all.svg?style=flat-square)](https://github.com/dscalzi/HeliosLauncher/releases)
+O launcher consome um JSON remoto definido em:
 
-**Supported Platforms**
+- [app/assets/js/distromanager.js](C:/Users/Admin/Documents/Projeto%20OreonLauncher/app/assets/js/distromanager.js)
 
-If you download from the [Releases](https://github.com/dscalzi/HeliosLauncher/releases) tab, select the installer for your system.
+Formato e exemplo local:
 
-| Platform | File |
-| -------- | ---- |
-| Windows x64 | `Helios-Launcher-setup-VERSION.exe` |
-| macOS x64 | `Helios-Launcher-setup-VERSION-x64.dmg` |
-| macOS arm64 | `Helios-Launcher-setup-VERSION-arm64.dmg` |
-| Linux x64 | `Helios-Launcher-setup-VERSION.AppImage` |
+- [docs/oreon_distribution.json](C:/Users/Admin/Documents/Projeto%20OreonLauncher/docs/oreon_distribution.json)
 
-## Console
+No estado atual, o manifesto esta hospedado via GitHub Raw (branch `main`).
 
-To open the console, use the following keybind.
+## Requisitos de Desenvolvimento
 
-```console
-ctrl + shift + i
+- Node.js 20.x
+- Windows/macOS/Linux para build do launcher
+
+## Executar em Desenvolvimento
+
+```bash
+npm install
+npm start
 ```
 
-Ensure that you have the console tab selected. Do not paste anything into the console unless you are 100% sure of what it will do. Pasting the wrong thing can expose sensitive information.
+## Build
 
-#### Export Output to a File
-
-If you want to export the console output, simply right click anywhere on the console and click **Save as..**
-
-![console example](https://i.imgur.com/T5e73jP.png)
-
-
-## Development
-
-This section details the setup of a basic developmentment environment.
-
-### Getting Started
-
-**System Requirements**
-
-* [Node.js][nodejs] v20
-
----
-
-**Clone and Install Dependencies**
-
-```console
-> git clone https://github.com/dscalzi/HeliosLauncher.git
-> cd HeliosLauncher
-> npm install
+```bash
+npm run dist
 ```
 
----
+Build por plataforma:
 
-**Launch Application**
+- `npm run dist:win`
+- `npm run dist:mac`
+- `npm run dist:linux`
 
-```console
-> npm start
-```
+## Estrutura Importante
 
----
+- `index.js`: processo principal do Electron.
+- `app/`: telas EJS, scripts e assets.
+- `app/assets/js/processbuilder.js`: montagem do comando Java/Minecraft.
+- `app/assets/js/authmanager.js`: autenticacao (Microsoft/offline).
+- `docs/`: documentacao e manifestos de exemplo.
 
-**Build Installers**
+## Microsoft Authentication (Azure)
 
-To build for your current platform.
+Para o login Microsoft funcionar em producao, o `AZURE_CLIENT_ID` do projeto precisa estar configurado e aprovado pela Microsoft/Minecraft.
 
-```console
-> npm run dist
-```
+Arquivo de configuracao:
 
-Build for a specific platform.
+- [app/assets/js/ipcconstants.js](C:/Users/Admin/Documents/Projeto%20OreonLauncher/app/assets/js/ipcconstants.js)
 
-| Platform    | Command              |
-| ----------- | -------------------- |
-| Windows x64 | `npm run dist:win`   |
-| macOS       | `npm run dist:mac`   |
-| Linux x64   | `npm run dist:linux` |
+Guia:
 
-Builds for macOS may not work on Windows/Linux and vice-versa.
+- [docs/MicrosoftAuth.md](C:/Users/Admin/Documents/Projeto%20OreonLauncher/docs/MicrosoftAuth.md)
 
----
+## Notas
 
-### Visual Studio Code
-
-All development of the launcher should be done using [Visual Studio Code][vscode].
-
-Paste the following into `.vscode/launch.json`
-
-```JSON
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug Main Process",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/node_modules/electron/cli.js",
-      "args" : ["."],
-      "outputCapture": "std"
-    },
-    {
-      "name": "Debug Renderer Process",
-      "type": "chrome",
-      "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
-      "windows": {
-        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
-      },
-      "runtimeArgs": [
-        "${workspaceFolder}/.",
-        "--remote-debugging-port=9222"
-      ],
-      "webRoot": "${workspaceFolder}"
-    }
-  ]
-}
-```
-
-This adds two debug configurations.
-
-#### Debug Main Process
-
-This allows you to debug Electron's [main process][mainprocess]. You can debug scripts in the [renderer process][rendererprocess] by opening the DevTools Window.
-
-#### Debug Renderer Process
-
-This allows you to debug Electron's [renderer process][rendererprocess]. This requires you to install the [Debugger for Chrome][chromedebugger] extension.
-
-Note that you **cannot** open the DevTools window while using this debug configuration. Chromium only allows one debugger, opening another will crash the program.
-
----
-
-### Note on Third-Party Usage
-
-Please give credit to the original author and provide a link to the original source. This is free software, please do at least this much.
-
-For instructions on setting up Microsoft Authentication, see https://github.com/dscalzi/HeliosLauncher/blob/master/docs/MicrosoftAuth.md.
-
----
-
-## Resources
-
-* [Wiki][wiki]
-* [Nebula (Create Distribution.json)][nebula]
-* [v2 Rewrite Branch (Inactive)][v2branch]
-
-The best way to contact the developers is on Discord.
-
-[![discord](https://discordapp.com/api/guilds/211524927831015424/embed.png?style=banner3)][discord]
-
----
-
-### See you ingame.
-
-
-[nodejs]: https://nodejs.org/en/ 'Node.js'
-[vscode]: https://code.visualstudio.com/ 'Visual Studio Code'
-[mainprocess]: https://electronjs.org/docs/tutorial/application-architecture#main-and-renderer-processes 'Main Process'
-[rendererprocess]: https://electronjs.org/docs/tutorial/application-architecture#main-and-renderer-processes 'Renderer Process'
-[chromedebugger]: https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome 'Debugger for Chrome'
-[discord]: https://discord.gg/zNWUXdt 'Discord'
-[wiki]: https://github.com/dscalzi/HeliosLauncher/wiki 'wiki'
-[nebula]: https://github.com/dscalzi/Nebula 'dscalzi/Nebula'
-[v2branch]: https://github.com/dscalzi/HeliosLauncher/tree/ts-refactor 'v2 branch'
+- Este projeto e um fork/customizacao do Helios Launcher para o ecossistema Oreon.
+- O `distribution.json` e a fonte de verdade para mods, bibliotecas, versoes e servidor alvo.

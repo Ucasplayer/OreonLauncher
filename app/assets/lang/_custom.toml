@@ -10,7 +10,16 @@ mediaInstagramURL = "#"
 mediaYouTubeURL = "#"
 mediaDiscordURL = "#"
 
+[ejs.login]
+loginSubheader = "MINECRAFT LOGIN"
+loginEmailPlaceholder = "EMAIL OR USERNAME"
+
+[ejs.loginOptions]
+loginWithOffline = "Login Offline"
+
 [ejs.settings]
+mojangAccount = "Offline"
+addMojangAccount = "+ Add Offline Account"
 sourceGithubLink = "#"
 supportLink = "#"
 
@@ -28,3 +37,14 @@ javaRequiredMessage = "Uma instalacao x64 valida do Java {major} e necessaria pa
 
 [js.landing.dlAsync]
 launchWrapperNotDownloaded = "Um arquivo essencial do carregador de mods nao foi baixado corretamente. Verifique sua conexao, antivirus e tente iniciar novamente."
+
+[js.login.offline]
+subheader = "LOGIN OFFLINE"
+usernamePlaceholder = "USERNAME"
+
+[js.login.error]
+invalidUsername = "* Use 1-16 letras, numeros ou _"
+
+[js.auth.offline.error]
+invalidUsernameTitle = "Invalid Offline Username"
+invalidUsernameDesc = "Use only letters, numbers, or underscore. The username must be 1 to 16 characters long."

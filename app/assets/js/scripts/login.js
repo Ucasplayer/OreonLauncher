@@ -17,9 +17,14 @@ const checkmarkContainer    = document.getElementById('checkmarkContainer')
 const loginRememberOption   = document.getElementById('loginRememberOption')
 const loginButton           = document.getElementById('loginButton')
 const loginForm             = document.getElementById('loginForm')
+const loginSubheader        = document.getElementById('loginSubheader')
+const loginOptions          = document.getElementById('loginOptions')
+const loginDisclaimer       = document.getElementById('loginDisclaimer')
+const loginPasswordContainer = loginPassword.closest('.loginFieldContainer')
 
 // Control variables.
 let lu = false, lp = false
+let loginOfflineMode = false
 
 
 /**
@@ -53,14 +58,18 @@ function shakeError(element){
  */
 function validateEmail(value){
     if(value){
-        if(!basicEmail.test(value) && !validUsername.test(value)){
+        if(loginOfflineMode && !validUsername.test(value)){
+            showError(loginEmailError, Lang.queryJS('login.error.invalidUsername'))
+            loginDisabled(true)
+            lu = false
+        } else if(!loginOfflineMode && !basicEmail.test(value) && !validUsername.test(value)){
             showError(loginEmailError, Lang.queryJS('login.error.invalidValue'))
             loginDisabled(true)
             lu = false
         } else {
             loginEmailError.style.opacity = 0
             lu = true
-            if(lp){
+            if(lp || loginOfflineMode){
                 loginDisabled(false)
             }
         }
@@ -168,12 +177,38 @@ loginCancelButton.onclick = (e) => {
     switchView(getCurrentView(), loginViewOnCancel, 500, 500, () => {
         loginUsername.value = ''
         loginPassword.value = ''
+        setLoginOfflineMode(false)
         loginCancelEnabled(false)
         if(loginViewCancelHandler != null){
             loginViewCancelHandler()
             loginViewCancelHandler = null
         }
     })
+}
+
+function setLoginOfflineMode(val){
+    loginOfflineMode = val
+    lu = false
+    lp = false
+    loginEmailError.style.opacity = 0
+    loginPasswordError.style.opacity = 0
+    loginUsername.value = ''
+    loginPassword.value = ''
+    loginDisabled(true)
+
+    if(val){
+        loginSubheader.innerHTML = Lang.queryJS('login.offline.subheader')
+        loginUsername.placeholder = Lang.queryJS('login.offline.usernamePlaceholder')
+        loginPasswordContainer.style.display = 'none'
+        loginOptions.style.display = 'none'
+        loginDisclaimer.style.display = 'none'
+    } else {
+        loginSubheader.innerHTML = Lang.query('ejs.login.loginSubheader')
+        loginUsername.placeholder = Lang.query('ejs.login.loginEmailPlaceholder')
+        loginPasswordContainer.style.display = null
+        loginOptions.style.display = null
+        loginDisclaimer.style.display = null
+    }
 }
 
 // Disable default form behavior.
@@ -187,7 +222,11 @@ loginButton.addEventListener('click', () => {
     // Show loading stuff.
     loginLoading(true)
 
-    AuthManager.addMojangAccount(loginUsername.value, loginPassword.value).then((value) => {
+    const loginPromise = loginOfflineMode
+        ? AuthManager.addOfflineAccount(loginUsername.value)
+        : AuthManager.addMojangAccount(loginUsername.value, loginPassword.value)
+
+    loginPromise.then((value) => {
         updateSelectedAccount(value)
         loginButton.innerHTML = loginButton.innerHTML.replace(Lang.queryJS('login.loggingIn'), Lang.queryJS('login.success'))
         $('.circle-loader').toggleClass('load-complete')
@@ -203,6 +242,7 @@ loginButton.addEventListener('click', () => {
                 loginViewCancelHandler = null // Reset this for good measure.
                 loginUsername.value = ''
                 loginPassword.value = ''
+                setLoginOfflineMode(false)
                 $('.circle-loader').toggleClass('load-complete')
                 $('.checkmark').toggle()
                 loginLoading(false)
