@@ -1,6 +1,6 @@
 appId: 'oreonlauncher'
 productName: 'Oreon Launcher'
-artifactName: '${productName}-setup-${version}.${ext}'
+artifactName: 'Oreon-Launcher-setup-${version}.${ext}'
 
 copyright: 'Copyright (c) 2026 Oreon'
 
@@ -8,7 +8,7 @@ asar: true
 compression: 'maximum'
 
 files:
-  - '!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,.eslintrc.json}'
+  - '!{dist,OreonLauncher,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,.eslintrc.json}'
 
 extraResources:
   - 'libraries'

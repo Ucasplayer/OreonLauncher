@@ -132,6 +132,9 @@ continueButton = "CONTINUAR"
 [js.discord]
 waiting = "Aguardando cliente..."
 state = "Servidor: {shortId}"
+launcherDetails = "Jogando Oreon Roleplay"
+launcherState = "Preparando entrada no Oreon"
+discordButton = "Entrar no Discord"
 
 [js.index]
 microsoftLoginTitle = "Login Microsoft"
@@ -211,8 +214,11 @@ checking = "Buscando noticias"
 
 [js.landing.discord]
 loading = "Carregando jogo..."
+launchingState = "Iniciando Oreon"
 joining = "Entrando no servidor!"
-joined = "Explorando o servidor!"
+joined = "Dentro do servidor Oreon"
+inServerState = "Jogando no Oreon"
+playerCountState = "{online}/{max} jogadores online"
 
 [js.overlay]
 dismiss = "Fechar"

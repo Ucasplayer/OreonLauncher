@@ -41,6 +41,7 @@ const server_selection_button = document.getElementById('server_selection_button
 const user_text               = document.getElementById('user_text')
 
 const loggerLanding = LoggerUtil.getLogger('Landing')
+let latestServerPlayerCount = null
 
 /* Launch Progress Wrapper Functions */
 
@@ -235,6 +236,20 @@ const refreshMojangStatuses = async function(){
     document.getElementById('mojang_status_icon').style.color = MojangRestAPI.statusToHex(status)
 }
 
+const fetchServerPlayerCount = async (serv) => {
+    try {
+        const servStat = await getServerStatus(47, serv.hostname, serv.port)
+        return {
+            online: servStat.players.online,
+            max: servStat.players.max
+        }
+    } catch (err) {
+        loggerLanding.warn('Unable to refresh server status, assuming offline.')
+        loggerLanding.debug(err)
+        return null
+    }
+}
+
 const refreshServerStatus = async (fade = false) => {
     loggerLanding.info('Refreshing Server Status')
     const serv = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
@@ -242,17 +257,14 @@ const refreshServerStatus = async (fade = false) => {
     let pLabel = Lang.queryJS('landing.serverStatus.server')
     let pVal = Lang.queryJS('landing.serverStatus.offline')
 
-    try {
+    latestServerPlayerCount = await fetchServerPlayerCount(serv)
 
-        const servStat = await getServerStatus(47, serv.hostname, serv.port)
-        console.log(servStat)
+    if(latestServerPlayerCount != null) {
         pLabel = Lang.queryJS('landing.serverStatus.players')
-        pVal = servStat.players.online + '/' + servStat.players.max
-
-    } catch (err) {
-        loggerLanding.warn('Unable to refresh server status, assuming offline.')
-        loggerLanding.debug(err)
+        pVal = latestServerPlayerCount.online + '/' + latestServerPlayerCount.max
+        DiscordWrapper.updatePlayerCount(latestServerPlayerCount)
     }
+
     if(fade){
         $('#server_status_wrapper').fadeOut(250, () => {
             document.getElementById('landingPlayerLabel').innerHTML = pLabel
@@ -441,8 +453,11 @@ let proc
 let hasRPC = false
 // Joined server regex
 // Change this if your server uses something different.
-const GAME_JOINED_REGEX = /\[.+\]: Sound engine started/
+const GAME_STARTED_REGEX = /\[.+\]: Sound engine started/
 const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+)$/
+const SERVER_CONNECTING_REGEX = /\[.+\]: Connecting to .+,\s*\d+/
+const SERVER_RESOURCE_PACK_REGEX = /\[.+\]: Reloading ResourceManager:.+server\/[a-f0-9-]+\/[a-f0-9-]+/i
+const SERVER_CONFIGURED_REGEX = /\[.+\]: \[voicechat\] (?:Sending secret request to the server|Received secret|Server acknowledged authentication|Server acknowledged connection check)/
 const MIN_LINGER = 5000
 
 async function dlAsync(login = true) {
@@ -557,14 +572,40 @@ async function dlAsync(login = true) {
         let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion())
         setLaunchDetails(Lang.queryJS('landing.dlAsync.launchingGame'))
 
-        // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
-        const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[CHAT\\] ${authUser.displayName} joined the game`)
+        const escapedDisplayName = authUser.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[.+\\] \\[CHAT\\].*(?:${escapedDisplayName}.*(?:joined|entrou)|(?:joined|entrou).*${escapedDisplayName})`, 'i')
+        let serverJoinDetected = false
+
+        const setRpcLaunching = () => {
+            if(!hasRPC) return
+            DiscordWrapper.updateActivity({
+                details: Lang.queryJS('landing.discord.joining'),
+                state: Lang.queryJS('landing.discord.launchingState')
+            })
+        }
+
+        const setRpcInsideServer = async () => {
+            if(!hasRPC || serverJoinDetected) return
+            serverJoinDetected = true
+            latestServerPlayerCount = await fetchServerPlayerCount(serv)
+            if(latestServerPlayerCount != null) {
+                DiscordWrapper.updatePlayerCount(latestServerPlayerCount)
+            }
+            DiscordWrapper.updateActivity({
+                details: Lang.queryJS('landing.discord.joined'),
+                state: latestServerPlayerCount != null
+                    ? Lang.queryJS('landing.discord.playerCountState', {
+                        online: latestServerPlayerCount.online,
+                        max: latestServerPlayerCount.max
+                    })
+                    : Lang.queryJS('landing.discord.inServerState')
+            })
+        }
 
         const onLoadComplete = () => {
             toggleLaunchArea(false)
             if(hasRPC){
-                DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.loading'))
-                proc.stdout.on('data', gameStateChange)
+                setRpcLaunching()
             }
             proc.stdout.removeListener('data', tempListener)
             proc.stderr.removeListener('data', gameErrorListener)
@@ -587,12 +628,15 @@ async function dlAsync(login = true) {
         }
 
         // Listener for Discord RPC.
-        const gameStateChange = function(data){
-            data = data.trim()
-            if(SERVER_JOINED_REGEX.test(data)){
-                DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.joined'))
-            } else if(GAME_JOINED_REGEX.test(data)){
-                DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.joining'))
+        const gameStateChange = async function(data){
+            for(const line of data.trim().split('\n')) {
+                if(SERVER_JOINED_REGEX.test(line)
+                    || SERVER_CONFIGURED_REGEX.test(line)
+                    || SERVER_RESOURCE_PACK_REGEX.test(line)){
+                    await setRpcInsideServer()
+                } else if(SERVER_CONNECTING_REGEX.test(line) || GAME_STARTED_REGEX.test(line)){
+                    setRpcLaunching()
+                }
             }
         }
 
@@ -610,18 +654,26 @@ async function dlAsync(login = true) {
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)
+            proc.stdout.on('data', gameStateChange)
             proc.stderr.on('data', gameErrorListener)
 
             setLaunchDetails(Lang.queryJS('landing.dlAsync.doneEnjoyServer'))
 
             // Init Discord Hook
             if(distro.rawDistribution.discord != null && serv.rawServer.discord != null){
-                DiscordWrapper.initRPC(distro.rawDistribution.discord, serv.rawServer.discord)
-                hasRPC = true
+                latestServerPlayerCount = await fetchServerPlayerCount(serv)
+                hasRPC = DiscordWrapper.initRPC(
+                    distro.rawDistribution.discord,
+                    serv.rawServer.discord,
+                    Lang.queryJS('landing.discord.joining'),
+                    latestServerPlayerCount
+                )
+                setRpcLaunching()
                 proc.on('close', (code, signal) => {
-                    loggerLaunchSuite.info('Shutting down Discord Rich Presence..')
-                    DiscordWrapper.shutdownRPC()
+                    loggerLaunchSuite.info('Restoring launcher Discord Rich Presence..')
                     hasRPC = false
+                    proc.stdout.removeListener('data', gameStateChange)
+                    DiscordWrapper.initLauncherRPC(distro.rawDistribution.discord, serv.rawServer.discord)
                     proc = null
                 })
             }
@@ -952,6 +1004,59 @@ function displayArticle(articleObject, index){
     newsContent.setAttribute('article', index-1)
 }
 
+function stripTwitterMediaLinks(html){
+    const container = document.createElement('div')
+    container.innerHTML = html || ''
+    Array.from(container.querySelectorAll('a')).forEach(anchor => {
+        const href = anchor.getAttribute('href') || ''
+        const text = (anchor.textContent || '').trim().toLowerCase()
+        if(text === 'pic.twitter.com' || text.startsWith('pic.twitter.com') || href.includes('t.co/')){
+            anchor.remove()
+        }
+    })
+    return container.innerHTML.trim()
+}
+
+function getNamespacedElements(element, namespace, tagName, fallbackName){
+    const namespaced = Array.from(element.getElementsByTagNameNS(namespace, tagName))
+    if(namespaced.length > 0){
+        return namespaced
+    }
+    return Array.from(element.getElementsByTagName(fallbackName))
+}
+
+function escapeHtmlAttribute(value){
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+}
+
+function resolveTweetContent(itemElement, el){
+    const description = el.find('description').text()
+    const contentEncoded = el.find('content\\:encoded').text()
+    const rawContent = contentEncoded || description
+    const mediaElements = getNamespacedElements(itemElement, 'http://search.yahoo.com/mrss/', 'content', 'media:content')
+    const imageUrls = mediaElements
+        .map(media => media.getAttribute('url'))
+        .filter(url => url && /\.(apng|avif|gif|jpe?g|png|webp)(\?|$)/i.test(url))
+
+    const container = document.createElement('div')
+    container.innerHTML = rawContent || ''
+    container.querySelectorAll('script').forEach(script => script.remove())
+
+    const tweetParagraph = container.querySelector('blockquote.twitter-tweet p')
+    const textContent = stripTwitterMediaLinks(tweetParagraph ? tweetParagraph.innerHTML : container.innerHTML)
+    const mediaContent = imageUrls.map(url => `<img class="newsTweetImage" src="${escapeHtmlAttribute(url)}" alt="">`).join('')
+
+    if(textContent || mediaContent){
+        return `<article class="newsTweetPost">${textContent ? `<div class="newsTweetText">${textContent}</div>` : ''}${mediaContent ? `<div class="newsTweetMedia">${mediaContent}</div>` : ''}</article>`
+    }
+
+    return rawContent
+}
+
 /**
  * Load news information from the RSS feed specified in the
  * distribution index.
@@ -977,6 +1082,7 @@ async function loadNews(){
                 for(let i=0; i<items.length; i++){
                 // JQuery Element
                     const el = $(items[i])
+                    const itemElement = items[i]
 
                     // Resolve date.
                     const date = new Date(el.find('pubDate').text()).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
@@ -985,8 +1091,8 @@ async function loadNews(){
                     let comments = el.find('slash\\:comments').text() || '0'
                     comments = comments + ' Comment' + (comments === '1' ? '' : 's')
 
-                    // Fix relative links in content.
-                    let content = el.find('content\\:encoded').text()
+                    // Resolve and normalize article content.
+                    let content = resolveTweetContent(itemElement, el)
                     let regex = /src="(?!http:\/\/|https:\/\/)(.+?)"/g
                     let matches
                     while((matches = regex.exec(content))){

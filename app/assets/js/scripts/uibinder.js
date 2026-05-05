@@ -8,6 +8,7 @@ const { Type }      = require('helios-distribution-types')
 
 const AuthManager   = require('./assets/js/authmanager')
 const ConfigManager = require('./assets/js/configmanager')
+const LauncherDiscordWrapper = require('./assets/js/discordwrapper')
 const { DistroAPI } = require('./assets/js/distromanager')
 
 let rscShouldLoad = false
@@ -65,7 +66,11 @@ async function showMainUI(data){
     }
 
     await prepareSettings(true)
-    updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
+    const selectedServer = data.getServerById(ConfigManager.getSelectedServer())
+    updateSelectedServer(selectedServer)
+    if(data.rawDistribution.discord != null && selectedServer?.rawServer?.discord != null){
+        LauncherDiscordWrapper.initLauncherRPC(data.rawDistribution.discord, selectedServer.rawServer.discord)
+    }
     refreshServerStatus()
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'

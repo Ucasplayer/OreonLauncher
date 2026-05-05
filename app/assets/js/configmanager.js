@@ -148,6 +148,7 @@ exports.load = function(){
         }
         if(doValidate){
             config = validateKeySet(DEFAULT_CONFIG, config)
+            config.settings.game.autoConnect = true
             exports.save()
         }
     }

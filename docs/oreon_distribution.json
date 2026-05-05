@@ -1,11 +1,11 @@
 {
     "version": "1.0.0",
     "discord": {
-        "clientId": "",
+        "clientId": "1500587745150636112",
         "smallImageText": "Oreon",
         "smallImageKey": "oreon"
     },
-    "rss": "",
+    "rss": "https://rss.app/feeds/7vhTgIgZuUzy2QKK.xml",
     "servers": [
         {
             "id": "Oreon-1.21.5-Fabric",

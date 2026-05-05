@@ -9,6 +9,7 @@ const os                    = require('os')
 const path                  = require('path')
 
 const ConfigManager            = require('./configmanager')
+const MinecraftServerList      = require('./minecraftserverlist')
 
 const logger = LoggerUtil.getLogger('ProcessBuilder')
 
@@ -65,6 +66,7 @@ class ProcessBuilder {
         
         const uberModArr = modObj.fMods.concat(modObj.lMods)
         let args = this.constructJVMArguments(uberModArr, tempNativePath)
+        this.writeSavedServerList()
 
         if(mcVersionAtLeast('1.13', this.server.rawServer.minecraftVersion)){
             //args = args.concat(this.constructModArguments(modObj.fMods))
@@ -319,6 +321,15 @@ class ProcessBuilder {
             return []
         }
 
+    }
+
+    writeSavedServerList(){
+        MinecraftServerList.writeServerList(this.gameDir, [{
+            name: this.server.rawServer.name || 'Oreon',
+            ip: `${this.server.hostname}:${this.server.port}`,
+            acceptTextures: true,
+            hidden: false
+        }])
     }
 
     _processAutoConnectArg(args){

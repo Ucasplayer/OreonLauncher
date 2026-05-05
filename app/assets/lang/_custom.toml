@@ -30,7 +30,8 @@ welcomeDescCTA = "Voce esta a poucos cliques de entrar no Oreon."
 
 [js.landing.discord]
 joining = "Entrando em Oreon!"
-joined = "Explorando Oreon!"
+joined = "Dentro do servidor Oreon"
+inServerState = "Jogando no Oreon"
 
 [js.landing.systemScan]
 javaRequiredMessage = "Uma instalacao x64 valida do Java {major} e necessaria para iniciar o Oreon."

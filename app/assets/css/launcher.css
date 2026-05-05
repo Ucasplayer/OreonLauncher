@@ -2545,10 +2545,12 @@ input:checked + .toggleSwitchSlider:before {
 /* News content container. */
 #newsContent {
     height: 82vh;
-    width: 100%;
+    width: calc(100% - 90px);
+    max-width: 1180px;
     display: flex;
     -webkit-user-select: initial;
     position: relative;
+    gap: 34px;
 }
 
 /* Drop shadow displayed when content is scrolled out of view. */
@@ -2567,9 +2569,10 @@ input:checked + .toggleSwitchSlider:before {
 
 /* News article status container (left). */
 #newsStatusContainer {
-    width: calc(30% - 60px);
+    width: 285px;
+    flex: 0 0 285px;
     height: calc(100% - 30px);
-    padding: 15px 15px 15px 45px;
+    padding: 15px 0px 15px 0px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -2580,25 +2583,26 @@ input:checked + .toggleSwitchSlider:before {
 #newsStatusContent {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 /* News title wrapper. */
 #newsTitleContainer {
     display: flex;
-    max-width: 90%;
+    max-width: 100%;
 }
 
 /* News article title styles. */
 #newsArticleTitle {
-    font-size: 18px;
+    font-size: 22px;
+    line-height: 1.18;
     font-weight: bold;
     font-family: 'Avenir Medium';
     color: white;
     text-decoration: none;
     transition: 0.25s ease;
     outline: none;
-    text-align: right;
+    text-align: left;
 }
 #newsArticleTitle:hover,
 #newsArticleTitle:focus {
@@ -2619,7 +2623,7 @@ input:checked + .toggleSwitchSlider:before {
 #newsArticleDateWrapper,
 #newsArticleAuthorWrapper {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 /* Date and author shared styles. */
@@ -2653,7 +2657,7 @@ input:checked + .toggleSwitchSlider:before {
     text-decoration: none;
     transition: 0.25s ease;
     outline: none;
-    text-align: right;
+    text-align: left;
 }
 #newsArticleComments:focus,
 #newsArticleComments:hover {
@@ -2665,23 +2669,26 @@ input:checked + .toggleSwitchSlider:before {
 
 /* Article content container (right). */
 #newsArticleContainer {
-    width: calc(100% - 25px);
+    flex: 1 1 auto;
+    min-width: 0;
     height: 100%;
-    margin: 0px 0px 0px 25px;
+    margin: 0px;
 }
 
 /* Article content styles. */
 #newsArticleContentScrollable {
-    font-size: 12px;
+    font-size: 15px;
+    line-height: 1.45;
     overflow-y: scroll;
     height: 100%;
-    padding: 0px 15px 0px 15px;
+    padding: 0px 16px 0px 0px;
 }
 #newsArticleContentScrollable img,
 #newsArticleContentScrollable iframe {
-    max-width: 95%;
+    max-width: 100%;
     display: block;
     margin: 0 auto;
+    border-radius: 6px;
 }
 #newsArticleContentScrollable a {
     color: rgba(202, 202, 202, 0.75);
@@ -2732,7 +2739,39 @@ input:checked + .toggleSwitchSlider:before {
 
 
 #newsArticleContentWrapper {
-    width: 80%;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.newsTweetPost {
+    color: #ffffff;
+    font-family: 'Avenir Medium';
+    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.newsTweetText {
+    margin-bottom: 18px;
+    font-size: 18px;
+    line-height: 1.45;
+}
+
+.newsTweetText br {
+    content: '';
+    display: block;
+    margin-bottom: 8px;
+}
+
+.newsTweetMedia {
+    display: grid;
+    gap: 14px;
+}
+
+.newsTweetImage {
+    width: 100%;
+    max-height: 430px;
+    object-fit: contain;
+    background: rgba(0, 0, 0, 0.28);
 }
 
 .newsArticleSpacerTop {
@@ -2753,7 +2792,8 @@ input:checked + .toggleSwitchSlider:before {
     -webkit-user-select: none;
     position: absolute;
     bottom: 15px;
-    right: 0px;
+    left: 0px;
+    right: auto;
 }
 
 /* Navigation status span. */
@@ -2858,9 +2898,6 @@ input:checked + .toggleSwitchSlider:before {
     height: 70px;
     width: auto;
     position: relative;
-    border: 2px solid white;
-    box-sizing: border-box;
-    border-radius: 50%;
 }
 
 /* Logo container styles. */
