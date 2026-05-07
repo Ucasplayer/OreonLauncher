@@ -30,6 +30,7 @@ const {
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
+const { resolveServerJavaOptions } = require('./assets/js/javaoptions')
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -104,22 +105,23 @@ document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
     try {
         const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
+        const effectiveJavaOptions = resolveServerJavaOptions(server)
         const jExe = ConfigManager.getJavaExecutable(ConfigManager.getSelectedServer())
         if(jExe == null){
-            await asyncSystemScan(server.effectiveJavaOptions)
+            await asyncSystemScan(effectiveJavaOptions)
         } else {
 
             setLaunchDetails(Lang.queryJS('landing.launch.pleaseWait'))
             toggleLaunchArea(true)
             setLaunchPercentage(0, 100)
 
-            const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
+            const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), effectiveJavaOptions.supported)
             if(details != null){
                 loggerLanding.info('Jvm Details', details)
                 await dlAsync()
 
             } else {
-                await asyncSystemScan(server.effectiveJavaOptions)
+                await asyncSystemScan(effectiveJavaOptions)
             }
         }
     } catch(err) {

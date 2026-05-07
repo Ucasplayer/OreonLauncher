@@ -3,6 +3,7 @@ const os     = require('os')
 const semver = require('semver')
 
 const DropinModUtil  = require('./assets/js/dropinmodutil')
+const { resolveServerJavaOptions } = require('./assets/js/javaoptions')
 const { MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR } = require('./assets/js/ipcconstants')
 
 const settingsState = {
@@ -1356,8 +1357,9 @@ function populateMemoryStatus(){
  */
 async function populateJavaExecDetails(execPath){
     const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
+    const effectiveJavaOptions = resolveServerJavaOptions(server)
 
-    const details = await validateSelectedJvm(ensureJavaDirIsRoot(execPath), server.effectiveJavaOptions.supported)
+    const details = await validateSelectedJvm(ensureJavaDirIsRoot(execPath), effectiveJavaOptions.supported)
 
     if(details != null) {
         settingsJavaExecDetails.innerHTML = Lang.queryJS('settings.java.selectedJava', { version: details.semverStr, vendor: details.vendor })
@@ -1367,11 +1369,12 @@ async function populateJavaExecDetails(execPath){
 }
 
 function populateJavaReqDesc(server) {
-    settingsJavaReqDesc.innerHTML = Lang.queryJS('settings.java.requiresJava', { major: server.effectiveJavaOptions.suggestedMajor })
+    const effectiveJavaOptions = resolveServerJavaOptions(server)
+    settingsJavaReqDesc.innerHTML = Lang.queryJS('settings.java.requiresJava', { major: effectiveJavaOptions.suggestedMajor })
 }
 
 function populateJvmOptsLink(server) {
-    const major = server.effectiveJavaOptions.suggestedMajor
+    const { suggestedMajor: major } = resolveServerJavaOptions(server)
     settingsJvmOptsLink.innerHTML = Lang.queryJS('settings.java.availableOptions', { major: major })
     if(major >= 12) {
         settingsJvmOptsLink.href = `https://docs.oracle.com/en/java/javase/${major}/docs/specs/man/java.html#extra-options-for-java`
