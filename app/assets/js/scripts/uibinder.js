@@ -10,7 +10,7 @@ const AuthManager   = require('./assets/js/authmanager')
 const ConfigManager = require('./assets/js/configmanager')
 const LauncherDiscordWrapper = require('./assets/js/discordwrapper')
 const { DistroAPI } = require('./assets/js/distromanager')
-const { resolveServerJavaOptions } = require('./assets/js/javaoptions')
+const { resolveServerJavaOptions: resolveUIBinderJavaOptions } = require('./assets/js/javaoptions')
 
 let rscShouldLoad = false
 let fatalStartupError = false
@@ -239,7 +239,7 @@ function ensureJavaSettings(data) {
 
     // Nothing too fancy for now.
     for(const serv of data.servers){
-        ConfigManager.ensureJavaConfig(serv.rawServer.id, resolveServerJavaOptions(serv), serv.rawServer.javaOptions?.ram)
+        ConfigManager.ensureJavaConfig(serv.rawServer.id, resolveUIBinderJavaOptions(serv), serv.rawServer.javaOptions?.ram)
     }
 
     ConfigManager.save()

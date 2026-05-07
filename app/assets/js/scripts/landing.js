@@ -30,7 +30,7 @@ const {
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
-const { resolveServerJavaOptions } = require('./assets/js/javaoptions')
+const { resolveServerJavaOptions: resolveLandingJavaOptions } = require('./assets/js/javaoptions')
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -105,7 +105,7 @@ document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
     try {
         const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
-        const effectiveJavaOptions = resolveServerJavaOptions(server)
+        const effectiveJavaOptions = resolveLandingJavaOptions(server)
         const jExe = ConfigManager.getJavaExecutable(ConfigManager.getSelectedServer())
         if(jExe == null){
             await asyncSystemScan(effectiveJavaOptions)
