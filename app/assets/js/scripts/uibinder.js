@@ -75,7 +75,7 @@ async function showMainUI(data){
     refreshServerStatus()
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
-        document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
+        document.body.style.backgroundImage = `url('${document.body.getAttribute('data-background')}')`
         $('#main').show()
 
         const isLoggedIn = Object.keys(ConfigManager.getAuthAccounts()).length > 0
@@ -103,9 +103,7 @@ async function showMainUI(data){
         }
 
         setTimeout(() => {
-            $('#loadingContainer').fadeOut(500, () => {
-                $('#loadSpinnerImage').removeClass('rotating')
-            })
+            $('#loadingContainer').fadeOut(500)
         }, 250)
         
     }, 750)
