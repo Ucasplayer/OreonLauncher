@@ -136,7 +136,13 @@ class ProcessBuilder {
      * @returns {boolean} True if the mod is enabled, false otherwise.
      */
     static isModEnabled(modCfg, required = null){
-        return modCfg != null ? ((typeof modCfg === 'boolean' && modCfg) || (typeof modCfg === 'object' && (typeof modCfg.value !== 'undefined' ? modCfg.value : true))) : required != null ? required.def : true
+        if(modCfg != null){
+            return (typeof modCfg === 'boolean' && modCfg) || (typeof modCfg === 'object' && (typeof modCfg.value !== 'undefined' ? modCfg.value : true))
+        }
+        if(required != null){
+            return typeof required.def !== 'undefined' ? required.def : true
+        }
+        return true
     }
 
     /**
@@ -148,15 +154,8 @@ class ProcessBuilder {
     setupLiteLoader(){
         for(let ll of this.server.modules){
             if(ll.rawModule.type === Type.LiteLoader){
-                if(!ll.getRequired().value){
-                    const modCfg = ConfigManager.getModConfiguration(this.server.rawServer.id).mods
-                    if(ProcessBuilder.isModEnabled(modCfg[ll.getVersionlessMavenIdentifier()], ll.getRequired())){
-                        if(fs.existsSync(ll.getPath())){
-                            this.usingLiteLoader = true
-                            this.llPath = ll.getPath()
-                        }
-                    }
-                } else {
+                const modCfg = ConfigManager.getModConfiguration(this.server.rawServer.id).mods
+                if(ProcessBuilder.isModEnabled(modCfg[ll.getVersionlessMavenIdentifier()], ll.getRequired())){
                     if(fs.existsSync(ll.getPath())){
                         this.usingLiteLoader = true
                         this.llPath = ll.getPath()
@@ -182,11 +181,13 @@ class ProcessBuilder {
         for(let mdl of mdls){
             const type = mdl.rawModule.type
             if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
-                const o = !mdl.getRequired().value
-                const e = ProcessBuilder.isModEnabled(modCfg[mdl.getVersionlessMavenIdentifier()], mdl.getRequired())
-                if(!o || (o && e)){
+                const mdlID = mdl.getVersionlessMavenIdentifier()
+                const mdlCfg = modCfg != null ? modCfg[mdlID] : null
+                const e = ProcessBuilder.isModEnabled(mdlCfg, mdl.getRequired())
+                if(e){
                     if(mdl.subModules.length > 0){
-                        const v = this.resolveModConfiguration(modCfg[mdl.getVersionlessMavenIdentifier()].mods, mdl.subModules)
+                        const subModCfg = typeof mdlCfg === 'object' && mdlCfg.mods != null ? mdlCfg.mods : {}
+                        const v = this.resolveModConfiguration(subModCfg, mdl.subModules)
                         fMods = fMods.concat(v.fMods)
                         lMods = lMods.concat(v.lMods)
                         if(type === Type.LiteLoader){

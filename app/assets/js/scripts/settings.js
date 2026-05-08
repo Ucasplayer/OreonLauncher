@@ -757,10 +757,16 @@ function parseModulesForUI(mdls, submodules, servConf){
     for(const mdl of mdls){
 
         if(mdl.rawModule.type === Type.ForgeMod || mdl.rawModule.type === Type.LiteMod || mdl.rawModule.type === Type.LiteLoader || mdl.rawModule.type === Type.FabricMod){
+            const mdlID = mdl.getVersionlessMavenIdentifier()
+            const conf = servConf[mdlID]
+            const val = typeof conf === 'object'
+                ? (typeof conf.value !== 'undefined' ? conf.value : true)
+                : (typeof conf !== 'undefined' ? conf : mdl.getRequired().def)
+            const subModConf = typeof conf === 'object' && conf.mods != null ? conf.mods : {}
 
             if(mdl.getRequired().value){
 
-                reqMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod settings${submodules ? 'Sub' : ''}Mod" enabled>
+                reqMods += `<div id="${mdlID}" class="settingsBaseMod settings${submodules ? 'Sub' : ''}Mod" ${val ? 'enabled' : ''}>
                     <div class="settingsModContent">
                         <div class="settingsModMainWrapper">
                             <div class="settingsModStatus"></div>
@@ -770,21 +776,18 @@ function parseModulesForUI(mdls, submodules, servConf){
                             </div>
                         </div>
                         <label class="toggleSwitch" reqmod>
-                            <input type="checkbox" checked>
+                            <input type="checkbox" formod="${mdlID}" ${val ? 'checked' : ''}>
                             <span class="toggleSwitchSlider"></span>
                         </label>
                     </div>
                     ${mdl.subModules.length > 0 ? `<div class="settingsSubModContainer">
-                        ${Object.values(parseModulesForUI(mdl.subModules, true, servConf[mdl.getVersionlessMavenIdentifier()])).join('')}
+                        ${Object.values(parseModulesForUI(mdl.subModules, true, subModConf)).join('')}
                     </div>` : ''}
                 </div>`
 
             } else {
 
-                const conf = servConf[mdl.getVersionlessMavenIdentifier()]
-                const val = typeof conf === 'object' ? conf.value : conf
-
-                optMods += `<div id="${mdl.getVersionlessMavenIdentifier()}" class="settingsBaseMod settings${submodules ? 'Sub' : ''}Mod" ${val ? 'enabled' : ''}>
+                optMods += `<div id="${mdlID}" class="settingsBaseMod settings${submodules ? 'Sub' : ''}Mod" ${val ? 'enabled' : ''}>
                     <div class="settingsModContent">
                         <div class="settingsModMainWrapper">
                             <div class="settingsModStatus"></div>
@@ -794,12 +797,12 @@ function parseModulesForUI(mdls, submodules, servConf){
                             </div>
                         </div>
                         <label class="toggleSwitch">
-                            <input type="checkbox" formod="${mdl.getVersionlessMavenIdentifier()}" ${val ? 'checked' : ''}>
+                            <input type="checkbox" formod="${mdlID}" ${val ? 'checked' : ''}>
                             <span class="toggleSwitchSlider"></span>
                         </label>
                     </div>
                     ${mdl.subModules.length > 0 ? `<div class="settingsSubModContainer">
-                        ${Object.values(parseModulesForUI(mdl.subModules, true, conf.mods)).join('')}
+                        ${Object.values(parseModulesForUI(mdl.subModules, true, subModConf)).join('')}
                     </div>` : ''}
                 </div>`
 
@@ -850,16 +853,15 @@ function saveModConfiguration(){
 function _saveModConfiguration(modConf){
     for(let m of Object.entries(modConf)){
         const tSwitch = settingsModsContainer.querySelectorAll(`[formod='${m[0]}']`)
-        if(!tSwitch[0].hasAttribute('dropin')){
-            if(typeof m[1] === 'boolean'){
-                modConf[m[0]] = tSwitch[0].checked
-            } else {
-                if(m[1] != null){
-                    if(tSwitch.length > 0){
-                        modConf[m[0]].value = tSwitch[0].checked
-                    }
-                    modConf[m[0]].mods = _saveModConfiguration(modConf[m[0]].mods)
-                }
+        if(tSwitch.length === 0 || tSwitch[0].hasAttribute('dropin')){
+            continue
+        }
+        if(typeof m[1] === 'boolean'){
+            modConf[m[0]] = tSwitch[0].checked
+        } else {
+            if(m[1] != null){
+                modConf[m[0]].value = tSwitch[0].checked
+                modConf[m[0]].mods = _saveModConfiguration(modConf[m[0]].mods)
             }
         }
     }

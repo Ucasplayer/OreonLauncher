@@ -168,25 +168,12 @@ function syncModConfigurations(data){
                 const type = mdl.rawModule.type
 
                 if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
-                    if(!mdl.getRequired().value){
-                        const mdlID = mdl.getVersionlessMavenIdentifier()
-                        if(modsOld[mdlID] == null){
-                            mods[mdlID] = scanOptionalSubModules(mdl.subModules, mdl)
-                        } else {
-                            mods[mdlID] = mergeModConfiguration(modsOld[mdlID], scanOptionalSubModules(mdl.subModules, mdl), false)
-                        }
+                    const mdlID = mdl.getVersionlessMavenIdentifier()
+                    const v = scanOptionalSubModules(mdl.subModules, mdl)
+                    if(modsOld[mdlID] == null){
+                        mods[mdlID] = v
                     } else {
-                        if(mdl.subModules.length > 0){
-                            const mdlID = mdl.getVersionlessMavenIdentifier()
-                            const v = scanOptionalSubModules(mdl.subModules, mdl)
-                            if(typeof v === 'object'){
-                                if(modsOld[mdlID] == null){
-                                    mods[mdlID] = v
-                                } else {
-                                    mods[mdlID] = mergeModConfiguration(modsOld[mdlID], v, true)
-                                }
-                            }
-                        }
+                        mods[mdlID] = mergeModConfiguration(modsOld[mdlID], v)
                     }
                 }
             }
@@ -203,16 +190,7 @@ function syncModConfigurations(data){
             for(let mdl of mdls){
                 const type = mdl.rawModule.type
                 if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
-                    if(!mdl.getRequired().value){
-                        mods[mdl.getVersionlessMavenIdentifier()] = scanOptionalSubModules(mdl.subModules, mdl)
-                    } else {
-                        if(mdl.subModules.length > 0){
-                            const v = scanOptionalSubModules(mdl.subModules, mdl)
-                            if(typeof v === 'object'){
-                                mods[mdl.getVersionlessMavenIdentifier()] = v
-                            }
-                        }
-                    }
+                    mods[mdl.getVersionlessMavenIdentifier()] = scanOptionalSubModules(mdl.subModules, mdl)
                 }
             }
 
@@ -244,44 +222,30 @@ function ensureJavaSettings(data) {
 }
 
 /**
- * Recursively scan for optional sub modules. If none are found,
- * this function returns a boolean. If optional sub modules do exist,
- * a recursive configuration object is returned.
+ * Recursively scan mod submodules and generate the default
+ * configuration tree for each toggleable mod.
  * 
  * @returns {boolean | Object} The resolved mod configuration.
  */
 function scanOptionalSubModules(mdls, origin){
-    if(mdls != null){
-        const mods = {}
+    const mods = {}
 
+    if(mdls != null){
         for(let mdl of mdls){
             const type = mdl.rawModule.type
-            // Optional types.
             if(type === Type.ForgeMod || type === Type.LiteMod || type === Type.LiteLoader || type === Type.FabricMod){
-                // It is optional.
-                if(!mdl.getRequired().value){
-                    mods[mdl.getVersionlessMavenIdentifier()] = scanOptionalSubModules(mdl.subModules, mdl)
-                } else {
-                    if(mdl.hasSubModules()){
-                        const v = scanOptionalSubModules(mdl.subModules, mdl)
-                        if(typeof v === 'object'){
-                            mods[mdl.getVersionlessMavenIdentifier()] = v
-                        }
-                    }
-                }
+                mods[mdl.getVersionlessMavenIdentifier()] = scanOptionalSubModules(mdl.subModules, mdl)
             }
-        }
-
-        if(Object.keys(mods).length > 0){
-            const ret = {
-                mods
-            }
-            if(!origin.getRequired().value){
-                ret.value = origin.getRequired().def
-            }
-            return ret
         }
     }
+
+    if(Object.keys(mods).length > 0){
+        return {
+            value: origin.getRequired().def,
+            mods
+        }
+    }
+
     return origin.getRequired().def
 }
 
@@ -290,32 +254,28 @@ function scanOptionalSubModules(mdls, origin){
  * 
  * @param {boolean | Object} o The old configuration value.
  * @param {boolean | Object} n The new configuration value.
- * @param {boolean} nReq If the new value is a required mod.
  * 
  * @returns {boolean | Object} The merged configuration.
  */
-function mergeModConfiguration(o, n, nReq = false){
+function mergeModConfiguration(o, n){
     if(typeof o === 'boolean'){
         if(typeof n === 'boolean') return o
         else if(typeof n === 'object'){
-            if(!nReq){
-                n.value = o
-            }
+            n.value = o
             return n
         }
     } else if(typeof o === 'object'){
         if(typeof n === 'boolean') return typeof o.value !== 'undefined' ? o.value : true
         else if(typeof n === 'object'){
-            if(!nReq){
-                n.value = typeof o.value !== 'undefined' ? o.value : true
-            }
+            n.value = typeof o.value !== 'undefined' ? o.value : true
 
+            const oldMods = o.mods != null ? o.mods : {}
             const newMods = Object.keys(n.mods)
             for(let i=0; i<newMods.length; i++){
 
                 const mod = newMods[i]
-                if(o.mods[mod] != null){
-                    n.mods[mod] = mergeModConfiguration(o.mods[mod], n.mods[mod])
+                if(oldMods[mod] != null){
+                    n.mods[mod] = mergeModConfiguration(oldMods[mod], n.mods[mod])
                 }
             }
 
