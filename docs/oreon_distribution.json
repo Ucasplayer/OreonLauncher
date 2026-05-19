@@ -5,6 +5,20 @@
         "smallImageText": "Oreon",
         "smallImageKey": "oreon"
     },
+    "discordNews": {
+        "url": "https://shy-violet-c6e7.canallucastropod.workers.dev",
+        "timeout": 5000,
+        "channels": [
+            {
+                "id": "1406960395482038336",
+                "name": "Avisos"
+            },
+            {
+                "id": "1485740625579081848",
+                "name": "Patch Notes"
+            }
+        ]
+    },
     "rss": "https://rss.app/feeds/7vhTgIgZuUzy2QKK.xml",
     "servers": [
         {

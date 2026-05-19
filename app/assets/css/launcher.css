@@ -2773,6 +2773,31 @@ input:checked + .toggleSwitchSlider:before {
     background: rgba(0, 0, 0, 0.28);
 }
 
+.newsDiscordPost {
+    color: #ffffff;
+    font-family: 'Avenir Medium';
+    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.newsDiscordText {
+    margin-bottom: 18px;
+    font-size: 18px;
+    line-height: 1.45;
+    white-space: normal;
+}
+
+.newsDiscordMedia {
+    display: grid;
+    gap: 14px;
+}
+
+.newsDiscordImage {
+    width: 100%;
+    max-height: 430px;
+    object-fit: contain;
+    background: rgba(0, 0, 0, 0.28);
+}
+
 .newsArticleSpacerTop {
     height: 15px;
 }

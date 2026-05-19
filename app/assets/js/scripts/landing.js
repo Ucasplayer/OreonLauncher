@@ -3,6 +3,8 @@
  */
 // Requirements
 const { URL }                 = require('url')
+const fs                      = require('fs-extra')
+const { Type }                = require('helios-distribution-types')
 const {
     MojangRestAPI,
     getServerStatus
@@ -461,6 +463,74 @@ const SERVER_CONNECTING_REGEX = /\[.+\]: Connecting to .+,\s*\d+/
 const SERVER_RESOURCE_PACK_REGEX = /\[.+\]: Reloading ResourceManager:.+server\/[a-f0-9-]+\/[a-f0-9-]+/i
 const SERVER_CONFIGURED_REGEX = /\[.+\]: \[voicechat\] (?:Sending secret request to the server|Received secret|Server acknowledged authentication|Server acknowledged connection check)/
 const MIN_LINGER = 5000
+const MOD_LOADER_TYPES = new Set([Type.ForgeHosted, Type.Forge, Type.Fabric])
+
+function createFullRepairModule() {
+    return new FullRepair(
+        ConfigManager.getCommonDirectory(),
+        ConfigManager.getInstanceDirectory(),
+        ConfigManager.getLauncherDirectory(),
+        ConfigManager.getSelectedServer(),
+        DistroAPI.isDevMode()
+    )
+}
+
+function findModLoaderVersionManifest(serv) {
+    const modLoaderModule = serv.modules.find(({ rawModule: { type } }) => MOD_LOADER_TYPES.has(type))
+    if(modLoaderModule == null || !modLoaderModule.hasSubModules()) {
+        return null
+    }
+    return modLoaderModule.subModules.find(({ rawModule: { type } }) => type === Type.VersionManifest) || null
+}
+
+function isJsonParseFailure(err) {
+    return err instanceof SyntaxError || err?.name === 'SyntaxError'
+}
+
+async function redownloadModLoaderVersionManifest(err, serv, loggerLaunchSuite) {
+    if(!isJsonParseFailure(err)) {
+        throw err
+    }
+
+    const versionManifestModule = findModLoaderVersionManifest(serv)
+    if(versionManifestModule == null) {
+        throw err
+    }
+
+    loggerLaunchSuite.warn(`Detected corrupt mod loader version manifest at ${versionManifestModule.getPath()}, redownloading.`)
+    await fs.remove(versionManifestModule.getPath())
+
+    const repairModule = createFullRepairModule()
+    repairModule.spawnReceiver()
+
+    try {
+        setLaunchDetails(Lang.queryJS('landing.dlAsync.validatingFileIntegrity'))
+        setLaunchPercentage(0, 100)
+
+        const invalidFileCount = await repairModule.verifyFiles(percent => {
+            setLaunchPercentage(percent)
+        })
+        setLaunchPercentage(100)
+
+        if(invalidFileCount === 0) {
+            throw err
+        }
+
+        loggerLaunchSuite.info('Redownloading corrupt mod loader version manifest.')
+        setLaunchDetails(Lang.queryJS('landing.dlAsync.downloadingFiles'))
+        setLaunchPercentage(0)
+
+        await repairModule.download(percent => {
+            setDownloadPercentage(percent)
+        })
+        setDownloadPercentage(100)
+    } finally {
+        remote.getCurrentWindow().setProgressBar(-1)
+        if(repairModule.childProcess != null) {
+            repairModule.destroyReceiver()
+        }
+    }
+}
 
 async function dlAsync(login = true) {
 
@@ -495,13 +565,7 @@ async function dlAsync(login = true) {
     toggleLaunchArea(true)
     setLaunchPercentage(0, 100)
 
-    const fullRepairModule = new FullRepair(
-        ConfigManager.getCommonDirectory(),
-        ConfigManager.getInstanceDirectory(),
-        ConfigManager.getLauncherDirectory(),
-        ConfigManager.getSelectedServer(),
-        DistroAPI.isDevMode()
-    )
+    const fullRepairModule = createFullRepairModule()
 
     fullRepairModule.spawnReceiver()
 
@@ -565,7 +629,20 @@ async function dlAsync(login = true) {
         serv.rawServer.id
     )
 
-    const modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+    let modLoaderData
+    try {
+        modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+    } catch(err) {
+        try {
+            await redownloadModLoaderVersionManifest(err, serv, loggerLaunchSuite)
+            modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
+        } catch(repairErr) {
+            loggerLaunchSuite.error('Failed to load mod loader version manifest.', repairErr)
+            showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), Lang.queryJS('landing.dlAsync.checkConsoleForDetails'))
+            return
+        }
+    }
+
     const versionData = await mojangIndexProcessor.getVersionJson()
 
     if(login) {
@@ -904,7 +981,7 @@ async function initNews(){
         const lN = newsArr[0]
         const cached = ConfigManager.getNewsCache()
         let newHash = await digestMessage(lN.content)
-        let newDate = new Date(lN.date)
+        let newDate = new Date(lN.timestamp || lN.date)
         let isNew = false
 
         if(cached.date != null && cached.content != null){
@@ -989,12 +1066,12 @@ document.addEventListener('keydown', (e) => {
  * @param {number} index The article index.
  */
 function displayArticle(articleObject, index){
-    newsArticleTitle.innerHTML = articleObject.title
-    newsArticleTitle.href = articleObject.link
-    newsArticleAuthor.innerHTML = 'by ' + articleObject.author
-    newsArticleDate.innerHTML = articleObject.date
-    newsArticleComments.innerHTML = articleObject.comments
-    newsArticleComments.href = articleObject.commentsLink
+    newsArticleTitle.textContent = articleObject.title
+    newsArticleTitle.href = articleObject.link || '#'
+    newsArticleAuthor.textContent = articleObject.author
+    newsArticleDate.textContent = articleObject.date
+    newsArticleComments.textContent = articleObject.comments
+    newsArticleComments.href = articleObject.commentsLink || articleObject.link || '#'
     newsArticleContentScrollable.innerHTML = '<div id="newsArticleContentWrapper"><div class="newsArticleSpacerTop"></div>' + articleObject.content + '<div class="newsArticleSpacerBot"></div></div>'
     Array.from(newsArticleContentScrollable.getElementsByClassName('bbCodeSpoilerButton')).forEach(v => {
         v.onclick = () => {
@@ -1035,6 +1112,76 @@ function escapeHtmlAttribute(value){
         .replace(/>/g, '&gt;')
 }
 
+function escapeHtml(value){
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+}
+
+function formatNewsDate(date){
+    return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
+}
+
+function renderTextWithLinks(value){
+    const text = String(value || '')
+    const urlRegex = /https?:\/\/[^\s<>"']+/g
+    let html = ''
+    let lastIndex = 0
+    let match
+
+    while((match = urlRegex.exec(text)) != null){
+        html += escapeHtml(text.slice(lastIndex, match.index))
+        html += `<a href="${escapeHtmlAttribute(match[0])}">${escapeHtml(match[0])}</a>`
+        lastIndex = match.index + match[0].length
+    }
+
+    html += escapeHtml(text.slice(lastIndex))
+    return html.replace(/\r?\n/g, '<br>')
+}
+
+function isImageUrl(url){
+    return /\.(apng|avif|gif|jpe?g|png|webp)(\?|$)/i.test(url || '')
+}
+
+function resolveDiscordImages(article){
+    return [
+        ...(article.images || []),
+        ...(article.attachments || [])
+    ]
+        .map(item => typeof item === 'string' ? item : item?.url)
+        .filter(isImageUrl)
+}
+
+function resolveDiscordContent(article){
+    const body = article.content || article.description || ''
+    const textContent = renderTextWithLinks(body)
+    const mediaContent = resolveDiscordImages(article)
+        .map(url => `<img class="newsDiscordImage" src="${escapeHtmlAttribute(url)}" alt="">`)
+        .join('')
+
+    return `<article class="newsDiscordPost">${textContent ? `<div class="newsDiscordText">${textContent}</div>` : ''}${mediaContent ? `<div class="newsDiscordMedia">${mediaContent}</div>` : ''}</article>`
+}
+
+function normalizeDiscordArticle(article){
+    const timestamp = new Date(article.timestamp || article.date || article.createdAt || Date.now())
+    const category = article.category || article.channelName || 'Discord'
+    const title = article.title || category
+
+    return {
+        link: article.link || '#',
+        title: `[${category}] ${title}`,
+        date: formatNewsDate(timestamp),
+        timestamp: timestamp.toISOString(),
+        author: article.author || article.authorName || 'Oreon',
+        content: resolveDiscordContent(article),
+        comments: category,
+        commentsLink: article.link || '#'
+    }
+}
+
 function resolveTweetContent(itemElement, el){
     const description = el.find('description').text()
     const contentEncoded = el.find('content\\:encoded').text()
@@ -1066,6 +1213,14 @@ function resolveTweetContent(itemElement, el){
 async function loadNews(){
 
     const distroData = await DistroAPI.getDistribution()
+    if(distroData.rawDistribution.discordNews?.url) {
+        const discordNews = await loadDiscordNews(distroData.rawDistribution.discordNews)
+        if(discordNews?.articles != null) {
+            return discordNews
+        }
+        loggerLanding.warn('Unable to load Discord news endpoint, falling back to RSS.')
+    }
+
     if(!distroData.rawDistribution.rss) {
         loggerLanding.debug('No RSS feed provided.')
         return null
@@ -1087,7 +1242,8 @@ async function loadNews(){
                     const itemElement = items[i]
 
                     // Resolve date.
-                    const date = new Date(el.find('pubDate').text()).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
+                    const pubDate = new Date(el.find('pubDate').text())
+                    const date = formatNewsDate(pubDate)
 
                     // Resolve comments.
                     let comments = el.find('slash\\:comments').text() || '0'
@@ -1111,7 +1267,8 @@ async function loadNews(){
                             link,
                             title,
                             date,
-                            author,
+                            timestamp: pubDate.toISOString(),
+                            author: 'by ' + author,
                             content,
                             comments,
                             commentsLink: link + '#comments'
@@ -1127,6 +1284,31 @@ async function loadNews(){
             resolve({
                 articles: null
             })
+        })
+    })
+
+    return await promise
+}
+
+async function loadDiscordNews(discordNews){
+    if(!discordNews?.url) {
+        loggerLanding.debug('No Discord news endpoint provided.')
+        return null
+    }
+
+    const promise = new Promise((resolve) => {
+        $.ajax({
+            url: discordNews.url,
+            dataType: 'json',
+            success: (data) => {
+                const articles = Array.isArray(data?.articles)
+                    ? data.articles.map(normalizeDiscordArticle)
+                    : null
+                resolve({ articles })
+            },
+            timeout: discordNews.timeout || 5000
+        }).catch(() => {
+            resolve({ articles: null })
         })
     })
 
