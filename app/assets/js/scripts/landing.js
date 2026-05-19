@@ -3,8 +3,8 @@
  */
 // Requirements
 const { URL }                 = require('url')
-const fs                      = require('fs-extra')
-const { Type }                = require('helios-distribution-types')
+const landingFs               = require('fs-extra')
+const { Type: LandingType }   = require('helios-distribution-types')
 const {
     MojangRestAPI,
     getServerStatus
@@ -463,7 +463,7 @@ const SERVER_CONNECTING_REGEX = /\[.+\]: Connecting to .+,\s*\d+/
 const SERVER_RESOURCE_PACK_REGEX = /\[.+\]: Reloading ResourceManager:.+server\/[a-f0-9-]+\/[a-f0-9-]+/i
 const SERVER_CONFIGURED_REGEX = /\[.+\]: \[voicechat\] (?:Sending secret request to the server|Received secret|Server acknowledged authentication|Server acknowledged connection check)/
 const MIN_LINGER = 5000
-const MOD_LOADER_TYPES = new Set([Type.ForgeHosted, Type.Forge, Type.Fabric])
+const MOD_LOADER_TYPES = new Set([LandingType.ForgeHosted, LandingType.Forge, LandingType.Fabric])
 
 function createFullRepairModule() {
     return new FullRepair(
@@ -480,7 +480,7 @@ function findModLoaderVersionManifest(serv) {
     if(modLoaderModule == null || !modLoaderModule.hasSubModules()) {
         return null
     }
-    return modLoaderModule.subModules.find(({ rawModule: { type } }) => type === Type.VersionManifest) || null
+    return modLoaderModule.subModules.find(({ rawModule: { type } }) => type === LandingType.VersionManifest) || null
 }
 
 function isJsonParseFailure(err) {
@@ -498,7 +498,7 @@ async function redownloadModLoaderVersionManifest(err, serv, loggerLaunchSuite) 
     }
 
     loggerLaunchSuite.warn(`Detected corrupt mod loader version manifest at ${versionManifestModule.getPath()}, redownloading.`)
-    await fs.remove(versionManifestModule.getPath())
+    await landingFs.remove(versionManifestModule.getPath())
 
     const repairModule = createFullRepairModule()
     repairModule.spawnReceiver()
