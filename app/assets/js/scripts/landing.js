@@ -1125,7 +1125,20 @@ function formatNewsDate(date){
     return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
 }
 
-function renderTextWithLinks(value){
+function formatDiscordInline(value){
+    return escapeHtml(value)
+        .replace(/`([^`]+)`/g, '<code class="newsDiscordInlineCode">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+        .replace(/\|\|(.+?)\|\|/g, '<span class="newsDiscordSpoiler">$1</span>')
+        .replace(/&lt;#\d+&gt;/g, '<span class="newsDiscordMention">#canal</span>')
+        .replace(/&lt;@&amp;\d+&gt;/g, '<span class="newsDiscordMention">@cargo</span>')
+        .replace(/&lt;@!?\d+&gt;/g, '<span class="newsDiscordMention">@usuario</span>')
+        .replace(/@(everyone|here)/g, '<span class="newsDiscordMention">@$1</span>')
+}
+
+function renderDiscordInline(value){
     const text = String(value || '')
     const urlRegex = /https?:\/\/[^\s<>"']+/g
     let html = ''
@@ -1133,13 +1146,95 @@ function renderTextWithLinks(value){
     let match
 
     while((match = urlRegex.exec(text)) != null){
-        html += escapeHtml(text.slice(lastIndex, match.index))
+        html += formatDiscordInline(text.slice(lastIndex, match.index))
         html += `<a href="${escapeHtmlAttribute(match[0])}">${escapeHtml(match[0])}</a>`
         lastIndex = match.index + match[0].length
     }
 
-    html += escapeHtml(text.slice(lastIndex))
-    return html.replace(/\r?\n/g, '<br>')
+    html += formatDiscordInline(text.slice(lastIndex))
+    return html
+}
+
+function stripDiscordFormatting(value){
+    return String(value || '')
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/^\s*-#\s*/, '')
+        .replace(/\*\*|__|\|\|/g, '')
+        .trim()
+}
+
+function renderDiscordMarkdown(value, title){
+    const lines = String(value || '').replace(/\r\n/g, '\n').split('\n')
+    const rendered = []
+    const paragraph = []
+    let listOpen = false
+    let skippedDuplicateTitle = false
+
+    const closeList = () => {
+        if(listOpen) {
+            rendered.push('</ul>')
+            listOpen = false
+        }
+    }
+
+    const flushParagraph = () => {
+        if(paragraph.length > 0) {
+            rendered.push(`<p>${renderDiscordInline(paragraph.join(' '))}</p>`)
+            paragraph.length = 0
+        }
+    }
+
+    for(const rawLine of lines) {
+        const line = rawLine.trim()
+
+        if(!skippedDuplicateTitle && title && stripDiscordFormatting(line).toLowerCase() === stripDiscordFormatting(title).toLowerCase()) {
+            skippedDuplicateTitle = true
+            continue
+        }
+        skippedDuplicateTitle = true
+
+        if(line.length === 0) {
+            flushParagraph()
+            closeList()
+            continue
+        }
+
+        const headingMatch = line.match(/^(#{1,3})\s+(.+)$/)
+        if(headingMatch != null) {
+            flushParagraph()
+            closeList()
+            const level = Math.min(headingMatch[1].length + 1, 4)
+            rendered.push(`<h${level} class="newsDiscordHeading newsDiscordHeading${level}">${renderDiscordInline(headingMatch[2])}</h${level}>`)
+            continue
+        }
+
+        const noteMatch = line.match(/^-#\s*(.+)$/)
+        if(noteMatch != null) {
+            flushParagraph()
+            closeList()
+            rendered.push(`<p class="newsDiscordNote">${renderDiscordInline(noteMatch[1])}</p>`)
+            continue
+        }
+
+        const bulletMatch = line.match(/^[-*•]\s+(.+)$/)
+        if(bulletMatch != null) {
+            flushParagraph()
+            if(!listOpen) {
+                rendered.push('<ul class="newsDiscordList">')
+                listOpen = true
+            }
+            rendered.push(`<li>${renderDiscordInline(bulletMatch[1])}</li>`)
+            continue
+        }
+
+        closeList()
+        paragraph.push(line)
+    }
+
+    flushParagraph()
+    closeList()
+
+    return rendered.join('')
 }
 
 function isImageUrl(url){
@@ -1157,7 +1252,7 @@ function resolveDiscordImages(article){
 
 function resolveDiscordContent(article){
     const body = article.content || article.description || ''
-    const textContent = renderTextWithLinks(body)
+    const textContent = renderDiscordMarkdown(body, article.title)
     const mediaContent = resolveDiscordImages(article)
         .map(url => `<img class="newsDiscordImage" src="${escapeHtmlAttribute(url)}" alt="">`)
         .join('')
